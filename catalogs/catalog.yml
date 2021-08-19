@@ -1,0 +1,19 @@
+metadata:
+  version: 1
+sources:
+  la_open_data:
+    driver: dcat
+    args:
+      url: https://data.lacity.org/data.json
+  la_geohub:
+    driver: dcat
+    args:
+      url: http://geohub.lacity.org/data.json
+  la_county_open_data:
+    driver: dcat
+    args:
+      url: https://data.lacounty.gov/data.json
+  scag_gis_portal:
+    driver: dcat
+    args:
+      url: http://gisdata-scag.opendata.arcgis.com/data.json
