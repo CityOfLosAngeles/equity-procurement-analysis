@@ -367,7 +367,7 @@ def data_to_sheet(all_data_df, opp_naics_df, to_csv=False, to_sheet=False):
     final_df.rename(columns={'Opportunity_NAICS': 'Opportunity_NAICS_5'}, inplace=True)
     
     # Doing final ordering of columns
-    begin_col = ['Opportunity_NAICS_2', 'Opportunity_NAICS_5', 'Number of Opportunities']
+    begin_col = ['Opportunity_NAICS_2', 'Opportunity_NAICS_6', 'Number of Opportunities']
     column_order = begin_col + [col for col in final_df.columns if col not in begin_col]
     final_df = final_df[column_order]
     
