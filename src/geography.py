@@ -172,8 +172,8 @@ def count_awards_by_location(awards_in_city, awards_in_county, awards_in_state, 
 
 def count_opportunities_vs_businesses(city_biz_counts, county_biz_counts, other_biz_counts):
     opportunities = pd.read_csv('../data/naics_code_analysis.csv')
-    opportunities = opportunities[['Opportunity_NAICS',
-                                  'NAICS Industry Name (5-digit)',
+    opportunities = opportunities[['Opportunity_NAICS_5',
+                                  'NAICS Industry Name (6-digit)',
                                   'Number of Opportunities']]
 
     # preprocess: rename some columns

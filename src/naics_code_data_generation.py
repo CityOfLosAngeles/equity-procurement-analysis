@@ -292,7 +292,7 @@ def data_to_business_enterprise(data):
         total_data
         .reset_index(drop=False)
         .rename(columns={
-            'NAICS_Code__r.NAICS_Description__c': 'NAICS Industry Name (5-digit)'
+            'NAICS_Code__r.NAICS_Description__c': 'NAICS Industry Name (6-digit)'
         })
         .fillna('No award amount for this NAICS code.')
     )
