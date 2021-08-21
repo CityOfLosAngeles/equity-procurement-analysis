@@ -125,64 +125,13 @@ def get_business_naics_info(city_biz, county_biz, other_biz):
 
     return city_biz_counts, county_biz_counts, other_biz_counts
 
-def count_opportunities_by_naics(data):
-    print(data.columns)
-
-# all_opp = pd.read_csv('/content/drive/MyDrive/Diversity and Procurement Analysis/Scripts and Data/opportunities.csv')
-# all_opp.columns
-
-# # preprocessing
-
-# # rename some columns
-# all_opp.rename(columns={"NAICS Code: NAICS Code" : "NAICS"}, inplace=True)
-
-# # if business has no NAICS reported, replace it with 999999
-# all_opp.NAICS.fillna('999999', inplace=True)
-
-# # convert NAICS type to int
-# all_opp.NAICS = all_opp.NAICS.astype(str)
-
-# # if a NAICS is fewer than 6 digits, extend it to 6 digits by appending 0s
-# all_opp.NAICS = all_opp.NAICS.apply(lambda x: str(x).split('.')[0])
-# all_opp.NAICS = all_opp.NAICS.apply(lambda x: str(x) + '0'*(6-len(str(x))))
-# all_opp.NAICS = all_opp.NAICS.astype(str)
-
-# # all_opp.head()
-# # all_opp.NAICS.unique().size
-
-# # print some naics info
-# all_opp_counts = all_opp.NAICS.value_counts().to_frame().reset_index()
-# all_opp_counts.columns = ['NAICS', 'all_opp_count']
-# all_opp_counts.head()
-
-# """# Merge opportunities and business counts"""
-
-# merged = all_opp_counts.merge(city_biz_counts, how='outer', on='NAICS')
-# merged = merged.merge(county_biz_counts, how='outer', on='NAICS')
-# merged = merged.merge(other_biz_counts, how='outer', on='NAICS')
-
-# merged.replace(np.nan, 0, inplace=True)
-# merged.all_opp_count = merged.all_opp_count.astype(int)
-# merged.city_biz_count = merged.city_biz_count.astype(int)
-# merged.county_biz_count = merged.county_biz_count.astype(int)
-# merged.other_biz_count = merged.other_biz_count.astype(int)
-
-# merged.sort_values(by='all_opp_count', ascending=False, inplace=True)
-
-# merged.head()
-
-# # more columns
-# # merged['opp/city_biz'] = merged.all_opp_count/merged.city_biz_count
-# # merged['opp/(city_biz + county_biz)'] = merged.all_opp_count/(merged.city_biz_count + merged.county_biz_count)
-
-# # merged.query("city_biz_count > all_opp_count")
 
 
-def get_awards_by_location(data, city_zips, county_zips, county_names):
+def get_awards_by_location(city_zips, county_zips, county_names):
     """
     Returns awards broken down by geographical location 
     """
-    awards = data 
+    awards = pd.read_csv('../data/all_data.csv')
 
     # preprocess: rename some columns
     awards.rename(columns={"Account__r.BillingStreet" : "STREET",
@@ -221,9 +170,27 @@ def count_awards_by_location(awards_in_city, awards_in_county, awards_in_state, 
     return df
 
 
-def count_opportunities_vs_businesses():
-    pass
-# TODO
+def count_opportunities_vs_businesses(city_biz_counts, county_biz_counts, other_biz_counts):
+    opportunities = pd.read_csv('../data/naics_code_analysis.csv')
+    opportunities = opportunities[['Opportunity_NAICS',
+                                  'NAICS Industry Name (5-digit)',
+                                  'Number of Opportunities']]
+
+    # preprocess: rename some columns
+    opportunities.rename(columns={"Opportunity_NAICS": "NAICS"}, inplace=True)
+
+    # preprocess: cast data type
+    opportunities.NAICS = opportunities.NAICS.astype(str)
+
+    # merge opportunities with business counts
+    opportunities_vs_businesses = opportunities.merge(city_biz_counts, how='left', on='NAICS')
+    opportunities_vs_businesses = opportunities_vs_businesses.merge(county_biz_counts, how='left', on='NAICS')
+    opportunities_vs_businesses = opportunities_vs_businesses.merge(other_biz_counts, how='left', on='NAICS')
+    
+    # fill NA slots with "0"
+    opportunities_vs_businesses = opportunities_vs_businesses.fillna(0)
+
+    return opportunities_vs_businesses
 
 
 
@@ -232,21 +199,21 @@ def main():
     # So the distribution by location is slightly off due to some instances of double-counting
     # See sanity checks throughout this code
 
-    data = pd.read_csv('../data/all_data.csv')
-
     city_zips, county_zips, county_names = get_zip_codes()
     all_biz = get_all_business_data()
     city_biz, county_biz, other_biz = separate_businesses(all_biz, city_zips, county_zips, county_names)
     city_biz_counts, county_biz_counts, other_biz_counts = get_business_naics_info(city_biz, county_biz, other_biz)
 
-    awards_in_city, awards_in_county, awards_in_state, awards_out_of_state = get_awards_by_location(data, city_zips, county_zips, county_names)
+    awards_in_city, awards_in_county, awards_in_state, awards_out_of_state = get_awards_by_location(city_zips, county_zips, county_names)
     awards_by_location = count_awards_by_location(awards_in_city, awards_in_county, awards_in_state, awards_out_of_state)
 
-    count_opportunities_by_naics(data)
-    count_opportunities_vs_businesses()
+    opportunities_vs_businesses = count_opportunities_vs_businesses(city_biz_counts, county_biz_counts, other_biz_counts)
 
     # save awards by location to gsheet
+    save_files.save_to_gsheet(awards_by_location, "Procurement Data", 6)
+
     # save opportunities vs businesses to gsheet
+    save_files.save_to_gsheet(opportunities_vs_businesses, "Procurement Data", 5)
 
 
 
