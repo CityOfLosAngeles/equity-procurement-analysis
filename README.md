@@ -1,7 +1,12 @@
 equity-procurement-analysis
 ==============================
 
-A short description of the project.
+Following the City’s 2021 migration of procurement data into a Salesforce database, we assessed the City’s social equitability in choosing business partners--the first attempt to do so in over 20 years!
+
+Important Reminders
+------------
+1. Changing the Google Sheet's column names and tab names has profound impact on Tableau's ability to pull the data. If any changes get made to the script/google sheet, you need to check on the Tableau and make sure it is okay.
+2. Changing the Google Sheet's tab orders has profound impact on the way these scripts writes to the Google Sheet. Do not ever change the tab orders. If you want to add a new tab in the Sheet, append it to the end.
 
 Project Organization
 ------------
