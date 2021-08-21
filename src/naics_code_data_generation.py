@@ -364,7 +364,7 @@ def data_to_sheet(all_data_df, opp_naics_df, to_csv=False, to_sheet=False):
     
     # Adding two columns and organization NAICS columns
     final_df['Opportunity_NAICS_2'] = final_df['Opportunity_NAICS'].apply(lambda row: row[:2])
-    final_df.rename(columns={'Opportunity_NAICS': 'Opportunity_NAICS_5'}, inplace=True)
+    final_df.rename(columns={'Opportunity_NAICS': 'Opportunity_NAICS_6'}, inplace=True)
     
     # Doing final ordering of columns
     begin_col = ['Opportunity_NAICS_2', 'Opportunity_NAICS_6', 'Number of Opportunities']
@@ -380,7 +380,7 @@ def data_to_sheet(all_data_df, opp_naics_df, to_csv=False, to_sheet=False):
     
     # Creating CSV if `to_csv` is true
     if to_csv:
-        final_df.to_csv('../data/data_to_sheet.csv', index=False)
+        final_df.to_csv('../data/naics_code_analysis.csv', index=False)
     
     # Export dataframe to sheet if `to_sheet` is true
     if to_sheet:
@@ -389,7 +389,7 @@ def data_to_sheet(all_data_df, opp_naics_df, to_csv=False, to_sheet=False):
         gc = pygsheets.authorize(client_secret='../credentials/google_credentials.json')
 
         # Open the sheet (replace 'Testing Stuff' with correct sheet name.)
-        sh = gc.open('Testing Stuff')
+        sh = gc.open('Procurement Data')
 
         # Select first sheet
         wks = sh[0]
