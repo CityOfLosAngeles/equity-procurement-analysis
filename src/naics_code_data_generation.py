@@ -15,6 +15,9 @@ import json
 import itertools
 import re
 import pygsheets
+import warnings
+from pandas.core.common import SettingWithCopyWarning
+warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
 
 def get_http(ep):
@@ -372,7 +375,7 @@ def data_to_sheet(all_data_df, opp_naics_df, to_csv=False, to_sheet=False):
     final_df = final_df[column_order]
     
     # Removing unwanted rows and only listing rows with 100 opportunities or above
-    legacy_naics = final_df[final_df['Opportunity_NAICS'] == '999999']
+    legacy_naics = final_df[final_df['Opportunity_NAICS_6'] == '999999']
     if legacy_naics.shape[0] == 1:
         final_df.drop(index=legacy_naics.index, inplace=True)
     
