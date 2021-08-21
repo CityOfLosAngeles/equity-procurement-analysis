@@ -7,17 +7,12 @@ import save_files
 COUNTY_CLIENT = Socrata("data.lacounty.gov", None)
 CITY_CLIENT = Socrata("data.lacity.org", None)
 
-# city names and zips
-CITY_ZIPS = []
-COUNTY_ZIPS = []
-COUNTY_NAMES = []
-
 def get_zip_codes():
     """
     Fetches zip code and city names data from LA County Data Portal
-    Updates a list of zip codes making up LA City
-    Updates a list of zip codes making up LA County (excluding LA City)
-    Updates a list of names for cities in LA County (excluding LA City)
+    Returns a list of zip codes making up LA City
+    Returns a list of zip codes making up LA County (excluding LA City)
+    Returns a list of names for cities in LA County (excluding LA City)
     """
 
     # Fetch information from the LA County data portal
@@ -44,12 +39,11 @@ def get_zip_codes():
 
     # Get a list of names for cities in LA County (excluding LA City)
     county_names = zips[zips.postal_city_1 != 'losangeles'].postal_city_1
+    county_names = county_names.astype(str)
     county_names = county_names.unique()
 
     # return city_zips, county_zips, county_names
-    CITY_ZIPS = city_zips
-    COUNTY_ZIPS = county_zips
-    COUNTY_NAMES = county_names
+    return city_zips, county_zips, county_names
 
 
 def get_all_business_data():
@@ -60,13 +54,15 @@ def get_all_business_data():
     # fetch List of Active Businesses
     all_biz = pd.DataFrame.from_records(CITY_CLIENT.get("6rrh-rzua"))
 
+    # preprocess: rename some columns
+    all_biz.rename(columns={"street_address": "STREET",
+                            "city": "CITY",
+                            'zip_code': "ZIP9",
+                            'naics': "NAICS"
+                            }, inplace=True)
+    
     # preprocess: if business has no NAICS reported, replace it with 999999 (aka the "legacy" code)
     all_biz.NAICS.fillna('999999', inplace=True)
-
-    # preprocess: rename some columns
-    all_biz.rename(columns={"STREET ADDRESS": "STREET",
-                            'ZIP CODE': "ZIP9",
-                            }, inplace=True)
 
     # preprocess: make all city names lowercase and remove spaces
     all_biz.CITY = all_biz.CITY.apply(
@@ -93,19 +89,19 @@ def get_all_business_data():
     return all_biz
 
 
-def separate_businesses(all_biz: pd.DataFrame):
+def separate_businesses(all_biz: pd.DataFrame, city_zips, county_zips, county_names):
     """
     Returns a dataframe of registered active businesses in LA City
     Returns a dataframe of registered active businesses in LA County (excluding LA City)
     Returns a dataframe of registered active businesses outside LA County
     """
     # note that there are a lot of typos in the city names
-    city_biz = all_biz.loc[(all_biz.ZIP5.astype(str).isin(CITY_ZIPS.astype(str)) & (~all_biz.CITY.isin(COUNTY_NAMES))) | (all_biz.CITY == 'losangeles')]
+    city_biz = all_biz.loc[(all_biz.ZIP5.astype(str).isin(city_zips) & (~all_biz.CITY.isin(county_names))) | (all_biz.CITY == 'losangeles')]
 
-    county_biz = all_biz.loc[(all_biz.ZIP5.astype(str).isin(COUNTY_ZIPS.astype(str)) | (all_biz.CITY.isin(COUNTY_NAMES))) & (all_biz.CITY != 'losangeles')]
+    county_biz = all_biz.loc[(all_biz.ZIP5.astype(str).isin(county_zips)) | (all_biz.CITY.isin(county_names)) & (all_biz.CITY != 'losangeles')]
 
-    # other_biz = all_biz.loc[(~all_biz.ZIP5.isin(CITY_ZIPS)) & (~all_biz.ZIP5.isin(COUNTY_ZIPS)) & (all_biz.CITY != 'losangeles') & (~all_biz.CITY.isin(COUNTY_NAMES))]
-    other_biz = pd.concat([all_biz, city_biz, county_biz]).drop_duplicates(keep=False)
+    other_biz = all_biz.loc[(~all_biz.ZIP5.isin(city_zips)) & (~all_biz.ZIP5.isin(county_zips)) & (all_biz.CITY != 'losangeles') & (~all_biz.CITY.isin(county_names))]
+    # other_biz = pd.concat([all_biz, city_biz, county_biz]).drop_duplicates(keep=False)
 
     # sanity check
     print(all_biz.size - city_biz.size - county_biz.size - other_biz.size == 0)
@@ -129,9 +125,8 @@ def get_business_naics_info(city_biz, county_biz, other_biz):
 
     return city_biz_counts, county_biz_counts, other_biz_counts
 
-# """# Read in opportunities
-# This report was generated in Salesforce. Bid due date 7/1/2011 - 7/15/2021
-# """
+def count_opportunities_by_naics(data):
+    print(data.columns)
 
 # all_opp = pd.read_csv('/content/drive/MyDrive/Diversity and Procurement Analysis/Scripts and Data/opportunities.csv')
 # all_opp.columns
@@ -183,56 +178,75 @@ def get_business_naics_info(city_biz, county_biz, other_biz):
 # # merged.query("city_biz_count > all_opp_count")
 
 
+def get_awards_by_location(data, city_zips, county_zips, county_names):
+    """
+    Returns awards broken down by geographical location 
+    """
+    awards = data 
 
-# """# Read in awards
+    # preprocess: rename some columns
+    awards.rename(columns={"Account__r.BillingStreet" : "STREET",
+                        'Account__r.BillingPostalCode' : "ZIP5",
+                        'Account__r.BillingCity' : "CITY",
+                        'Account__r.BillingState' : "STATE",
+                    }, inplace=True)
 
-# """
+    # preprocess: make all city names lowercase and remove spaces
+    awards.CITY = awards.CITY.apply(lambda x: x.strip().lower().replace(' ', ''))
 
-# awards = pd.read_csv('/content/drive/MyDrive/Diversity and Procurement Analysis/Scripts and Data/data_with_latlong.csv')
-# awards.columns
 
-# # rename some columns
-# awards.rename(columns={"Account__r.BillingStreet" : "STREET",
-#                     'Account__r.BillingPostalCode' : "ZIP5",
-#                     'Account__r.BillingCity' : "CITY",
-#                     'Account__r.BillingState' : "STATE",
-#                    }, inplace=True)
+    # awarded in county
+    awards_in_city = awards.loc[(awards.ZIP5.astype(str).isin(city_zips) & (~awards.CITY.isin(county_names))) | (awards.CITY == 'losangeles')]
+    awards_in_county = awards.loc[(awards.ZIP5.astype(str).isin(county_zips) | (awards.CITY.isin(county_names))) & (awards.CITY != 'losangeles')]
+    awards_in_state = awards.loc[(awards.STATE == 'CA') & (~awards.ZIP5.astype(str).isin(county_zips)) & (~awards.ZIP5.astype(str).isin(city_zips)) & (~awards.CITY.isin(county_names)) & (awards.CITY != 'losangeles')]
+    awards_out_of_state = awards.loc[(awards.STATE!='CA')]
 
-# awards.columns
+    # sanity check
+    print(len(awards) - len(awards_in_city) - len(awards_in_county) - len(awards_in_state) - len(awards_out_of_state))
 
-# # preprocess city names
-# awards.CITY = awards.CITY.apply(lambda x: x.strip().lower().replace(' ', ''))
-# # awards.CITY.unique()
+    return awards_in_city, awards_in_county, awards_in_state, awards_out_of_state
 
-# zero_award_amount = awards.loc[(awards.STATE!='CA')]
 
-# # awarded in county
-# awards_in_county = awards.loc[awards.ZIP5.astype(str).isin(county_zips.astype(str)) & ( (awards.CITY != 'losangeles')) ]
-# awards_in_city = awards.loc[(awards.ZIP5.astype(str).isin(city_zips.astype(str))) | (awards.CITY == 'losangeles')]
-# awards_in_state = awards.loc[(awards.STATE=='CA') & (~awards.ZIP5.astype(str).isin(county_zips.astype(str))) & (~awards.ZIP5.astype(str).isin(city_zips.astype(str)))]
-# awards_out_of_state = awards.loc[(awards.STATE!='CA')]
+def count_awards_by_location(awards_in_city, awards_in_county, awards_in_state, awards_out_of_state):
+    """
+    Returns a tally of how many awards in each region
+    """
+    df = pd.DataFrame({
+        'awards_in_city': awards_in_city.size,
+        'awards_in_county': awards_in_county.size,
+        'awards_in_state': awards_in_state.size,
+        'awards_out_of_state': awards_out_of_state.size
+    }, index=[0])
 
-# print(len(awards_in_city), len(awards_in_county), len(awards_in_state), len(awards_out_of_state))
-# awards_out_of_state.head()
+    return df
 
-# # sanity check
-# awards_in_state_all = awards.loc[(awards.STATE=='CA')]
 
-# len(awards_in_state_all) - len(awards_in_state) - len(awards_in_city) - len(awards_in_county)
+def count_opportunities_vs_businesses():
+    pass
+# TODO
 
-# # sanity check
-# len(awards) - len(awards_in_city) - len(awards_in_county) - len(awards_in_state) - len(awards_out_of_state)
-
-# """# Save file"""
-
-# merged.to_csv('/content/drive/MyDrive/Diversity and Procurement Analysis/Scripts and Data/business_counts.csv', index=False)
 
 
 def main():
-    get_zip_codes()
+    # Andrew said that counts within 75% accuracy is okay.
+    # So the distribution by location is slightly off due to some instances of double-counting
+    # See sanity checks throughout this code
+
+    data = pd.read_csv('../data/all_data.csv')
+
+    city_zips, county_zips, county_names = get_zip_codes()
     all_biz = get_all_business_data()
-    city_biz, county_biz, other_biz = separate_businesses(all_biz)
+    city_biz, county_biz, other_biz = separate_businesses(all_biz, city_zips, county_zips, county_names)
     city_biz_counts, county_biz_counts, other_biz_counts = get_business_naics_info(city_biz, county_biz, other_biz)
+
+    awards_in_city, awards_in_county, awards_in_state, awards_out_of_state = get_awards_by_location(data, city_zips, county_zips, county_names)
+    awards_by_location = count_awards_by_location(awards_in_city, awards_in_county, awards_in_state, awards_out_of_state)
+
+    count_opportunities_by_naics(data)
+    count_opportunities_vs_businesses()
+
+    # save awards by location to gsheet
+    # save opportunities vs businesses to gsheet
 
 
 
