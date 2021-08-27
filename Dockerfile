@@ -3,7 +3,7 @@ RUN curl -sSL https://sdk.cloud.google.com |bash
 ENV PATH="/root/google-cloud-sdk/bin:${PATH}"
 RUN apt-get update && apt-get install -y \
   golang
-WORKDIR /app
+WORKDIR /home/jovyan/
 COPY ./ ./
 #RUN go build for Google Cloud Run web trigger
 RUN go build -v -o server 
@@ -15,4 +15,4 @@ COPY requirements.txt /tmp/
 RUN pip install -r /tmp/requirements.txt
 
 #CMD to start Google Cloud Run server for web trigger
-CMD ["/app/server"]
+CMD ["/home/jovyan/server"]
