@@ -348,7 +348,7 @@ def data_to_naics_opp_counts(opp_naics_df):
     )
 
 
-def data_to_sheet(all_data_df, opp_naics_df, to_csv=False, to_sheet=False):
+def create_final_df(all_data_df, opp_naics_df):
     """
     Converts inputted dataframe into final Google Sheet.
     """
@@ -381,29 +381,24 @@ def data_to_sheet(all_data_df, opp_naics_df, to_csv=False, to_sheet=False):
     
     final_df = final_df[final_df['Number of Opportunities'] >= 100]
     
+    # Cache a parquet file
+    final_df.to_parquet("../data/naics_code_analysis.parquet")
+    
+     # Returning final dataset
+    return final_df
+
+
+def data_to_sheet(final_df, to_csv=False, to_sheet=False):
+        
     # Creating CSV if `to_csv` is true
     if to_csv:
         final_df.to_csv('../data/naics_code_analysis.csv', index=False)
     
     # Export dataframe to sheet if `to_sheet` is true
     if to_sheet:
+        save_files.save_to_gsheet(final_df, file_name = "Procurement Data", sheet_index = 0)
+
         
-        # Get authorization from `google_credentials.json` file.
-        gc = pygsheets.authorize(client_secret='../credentials/google_credentials.json')
-
-        # Open the sheet (replace 'Testing Stuff' with correct sheet name.)
-        sh = gc.open('Procurement Data')
-
-        # Select first sheet
-        wks = sh[0]
-
-        # Update the sheet with the dataframe
-        wks.set_dataframe(final_df,(1,1))
-    
-    # Returning final dataset
-    return final_df
-
-
 # Adding generated Salesforce data to Google Sheet
-data = data_to_sheet(all_data, opp_naics, to_csv=False, to_sheet=False)
-
+data = create_final_df(all_data, opp_naics)
+data_to_sheet(data, to_csv=True, to_sheet=True)
