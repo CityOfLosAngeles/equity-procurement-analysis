@@ -210,10 +210,10 @@ def main():
     opportunities_vs_businesses = count_opportunities_vs_businesses(city_biz_counts, county_biz_counts, other_biz_counts)
 
     # save awards by location to gsheet
-    save_files.save_to_gsheet(awards_by_location, "Procurement Data", 6)
+    save_files.save_to_gsheet(awards_by_location, "Procurement Data New", 6)
 
     # save opportunities vs businesses to gsheet
-    save_files.save_to_gsheet(opportunities_vs_businesses, "Procurement Data", 5)
+    save_files.save_to_gsheet(opportunities_vs_businesses, "Procurement Data New", 5)
 
 
 
