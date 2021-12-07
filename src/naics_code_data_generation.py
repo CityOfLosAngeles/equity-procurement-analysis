@@ -18,6 +18,7 @@ import pygsheets
 import warnings
 from pandas.core.common import SettingWithCopyWarning
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
+from src import save_files
 
 
 def get_http(ep):
@@ -133,6 +134,11 @@ def get_sf_access_token(client_id: str, client_secret: str, refresh_token: str) 
       'Cookie': 'BrowserId=IoTFrthNEeuXEXtWwwGMWA; CookieConsentPolicy=0:0'
     }
     response = requests.request("POST", token_url, headers=headers, data=payload)
+    #AT added
+    print('token_url: ', token_url)
+    print('payload: ', payload)
+    print(response)
+    
     return response.json()['access_token']
 
 
@@ -396,7 +402,7 @@ def data_to_sheet(final_df, to_csv=False, to_sheet=False):
     
     # Export dataframe to sheet if `to_sheet` is true
     if to_sheet:
-        save_files.save_to_gsheet(final_df, file_name = "Procurement Data", sheet_index = 0)
+        save_files.save_to_gsheet(final_df, file_name = "Procurement Data New", sheet_index = 0)
 
         
 # Adding generated Salesforce data to Google Sheet
