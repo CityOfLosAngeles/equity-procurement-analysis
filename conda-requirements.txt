@@ -10,4 +10,3 @@ cartopy
 scikit-learn
 geopandas
 intake
-sodapy

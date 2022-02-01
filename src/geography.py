@@ -171,13 +171,13 @@ def count_awards_by_location(awards_in_city, awards_in_county, awards_in_state, 
 
 
 def count_opportunities_vs_businesses(city_biz_counts, county_biz_counts, other_biz_counts):
-    opportunities = pd.read_csv('../data/naics_code_analysis.csv')
-    opportunities = opportunities[['Opportunity_NAICS_5',
+    opportunities = pd.read_parquet('../data/naics_code_analysis.parquet')
+    opportunities = opportunities[['Opportunity_NAICS_6',
                                   'NAICS Industry Name (6-digit)',
                                   'Number of Opportunities']]
 
     # preprocess: rename some columns
-    opportunities.rename(columns={"Opportunity_NAICS": "NAICS"}, inplace=True)
+    opportunities.rename(columns={"Opportunity_NAICS_6": "NAICS"}, inplace=True)
 
     # preprocess: cast data type
     opportunities.NAICS = opportunities.NAICS.astype(str)
@@ -210,10 +210,10 @@ def main():
     opportunities_vs_businesses = count_opportunities_vs_businesses(city_biz_counts, county_biz_counts, other_biz_counts)
 
     # save awards by location to gsheet
-    save_files.save_to_gsheet(awards_by_location, "Procurement Data", 6)
+    save_files.save_to_gsheet(awards_by_location, "Procurement Data New", 6)
 
     # save opportunities vs businesses to gsheet
-    save_files.save_to_gsheet(opportunities_vs_businesses, "Procurement Data", 5)
+    save_files.save_to_gsheet(opportunities_vs_businesses, "Procurement Data New", 5)
 
 
 
