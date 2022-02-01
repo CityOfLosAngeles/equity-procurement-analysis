@@ -3,6 +3,7 @@ import save_files
 
 # Read in generated data from previous notebook
 all_data = pd.read_csv("../data/all_data.csv")
+print(list(all_data.columns))
 
 def get_percents(timeframes: list, timeframe_column: str = "bid_due_year"):
     """
@@ -55,7 +56,7 @@ def main():
     print(percents_by_year)
 
     # write to google sheet
-    save_files.save_to_gsheet(percents_by_year, "Procurement Data", 3)
+    save_files.save_to_gsheet(percents_by_year, "Procurement Data New", 3)
 
 
     # Generate google sheet for monthly analysis
@@ -64,7 +65,7 @@ def main():
     print(percents_by_month)
 
     # write to google sheet
-    save_files.save_to_gsheet(percents_by_month, "Procurement Data", 4)
+    save_files.save_to_gsheet(percents_by_month, "Procurement Data new", 4)
 
 
 if __name__ == "__main__":
